@@ -3,44 +3,67 @@ import time, logging
 
 from tumblr import get_post, TumblrPostNotFoundException, TumblrNotAQuestionPostException
 
-reddit = praw.Reddit("maro-transcriber")
-subreddit = reddit.subreddit("rzrkyb")
-logging.basicConfig(filename='maro.log', level=logging.DEBUG)
+replyText = """**Question** by **[{}]({})**: *{}*
 
-keyword = "markrosewater.tumblr.com"
+**Answer**: {}
 
-lastCheckedPost = 0
+---
 
-while True:
-    maxPost = 0
-    posts = list(subreddit.new())
-    # put newer submissions at the end of the list
-    posts.reverse()
-    for post in posts:
-        if post.created_utc > lastCheckedPost:
-            url = post.url
-            if keyword in url:
-                # get id
-                paths = url.split('/')
-                if len(paths) < 3:
-                    # no id
-                    logging.warn("could not identify id from url {}".format(url))
+This comment was made automatically. | [Source](https://www.github.com/bowdens/maro-bot) | Send feedback to /u/rzrkyb"""
+
+replyTextAnonymous = """**Question**: *{}*
+
+**Answer**: {}
+
+---
+
+This comment was made automatically. | [Source](https://www.github.com/bowdens/maro-bot) | Send feedback to /u/rzrkyb"""
+
+def create_reply(submission, tumblrPostId):
+    res = get_post(tumblrPostId)
+    question = res["question"]
+    answer = res["answer"]
+    asker = res["asking_name"]
+    askerUrl = res["asking_url"]
+    url = res["short_url"]
+    logging.info("Got question/answer from tumblr post {} ({})".format(tumblrPostId, url))
+    comment = submission.reply(replyText.format(asker, askerUrl, question, answer))
+    logging.info("comment made with id = {}".format(comment.id))
+
+
+def main():
+    reddit = praw.Reddit("maro-transcriber")
+    subreddit = reddit.subreddit("rzrkyb")
+    logging.basicConfig(filename='maro.log', level=logging.WARN)
+
+    keyword = "markrosewater.tumblr.com"
+
+    for post in subreddit.stream.submissions():
+        url = post.url
+        if keyword in url:
+            # get id
+            paths = url.split('/')
+            if len(paths) < 3:
+                # no id
+                logging.warn("could not identify id from url {} - not enough segments".format(url))
+            else:
+                id = None
+                for path in paths:
+                    if path.isdigit():
+                        id = path
+                if id is None:
+                    logging.warn("Could not identify id from url {} - no matching integer segments".format(url))
                 else:
-                    id = paths[2]
-                    logging.info("id found - {}".format(id))
                     try:
-                        question, answer = get_post(id)
-                        logging.info("Got question/answer from tumblr post {}".format(id))
-                        comment = post.reply("**Question**: *{}*\n\n**Answer**: {}\n\n---\n\nThis comment was created automatically with [maro-bot](https://www.github.com/bowdens/maro-bot) | Report issues to /u/rzrkyb".format(question, answer))
-                        logging.info("comment made with id = {}".format(comment.id))
-
+                        print("Creating post with id={}".format(id))
+                        create_reply(post, id)
                     except TumblrPostNotFoundException as e:
                         logging.warn("Tried looking but could not find post with id {}".format(id))
                     except TumblrNotAQuestionPostException as e:
                         logging.warn("found post with id {} but was not in the form of a question".format(id))
 
+        # hide the post when we're done so we won't see it again
+        post.hide()
 
-
-            lastCheckedPost = post.created_utc
-    time.sleep(30)
-    print("\nrestarting")
+if __name__ == "__main__":
+    main()
