@@ -3,6 +3,10 @@ import time, logging
 
 from tumblr import get_post, TumblrPostNotFoundException, TumblrNotAQuestionPostException
 
+keyword = "markrosewater.tumblr.com"
+subredditToStream = "rzrkyb"
+
+
 replyText = """**Question** by **[{}]({})**: *{}*
 
 **Answer**: {}
@@ -33,13 +37,13 @@ def create_reply(submission, tumblrPostId):
 
 def main():
     reddit = praw.Reddit("maro-transcriber")
-    subreddit = reddit.subreddit("rzrkyb")
-    logging.basicConfig(filename='maro.log', level=logging.WARN)
+    subreddit = reddit.subreddit(subredditToStream)
+    logging.basicConfig(filename='maro.log', level=logging.INFO)
 
-    keyword = "markrosewater.tumblr.com"
 
     for post in subreddit.stream.submissions():
         url = post.url
+        # check its from markrosewater.tumblr.com
         if keyword in url:
             # get id
             paths = url.split('/')
