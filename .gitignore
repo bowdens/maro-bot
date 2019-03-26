@@ -1,0 +1,4 @@
+secret.py
+praw.ini
+venv/
+__pycache__/
