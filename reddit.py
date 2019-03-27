@@ -1,6 +1,6 @@
 import praw
 import time, logging
-
+from sys import argv
 from tumblr import get_post, TumblrPostNotFoundException, TumblrNotAQuestionPostException
 
 keyword = "markrosewater.tumblr.com"
@@ -31,20 +31,30 @@ def create_reply(submission, tumblrPostId):
     askerUrl = res["asking_url"]
     url = res["short_url"]
     logging.info("Got question/answer from tumblr post {} ({})".format(tumblrPostId, url))
-    comment = submission.reply(replyText.format(asker, askerUrl, question, answer))
-    logging.info("comment made with id = {}".format(comment.id))
+    try:
+        print("creating comment - q: {} a: {}".format(question, answer))
+        comment = submission.reply(replyText.format(asker, askerUrl, question, answer))
+        logging.info("comment made with id = {}".format(comment.id))
+    except praw.exceptions.APIException as e:
+        print("comment failed! {}".format(e))
+        logging.warn("Could not make comment in response to {} due to api limit: {}".format(submission.id, e))
 
 
-def main():
+
+def main(debug=False):
     reddit = praw.Reddit("maro-transcriber")
     subreddit = reddit.subreddit(subredditToStream)
     logging.basicConfig(filename='maro-logs/maro.log', level=logging.INFO)
 
-
+    print("beginning to stream /r/{}".format(subreddit.display_name))
     for post in subreddit.stream.submissions():
         url = post.url
+        print("post found - {} {}".format(post.title, url))
         # check its from markrosewater.tumblr.com
         if keyword in url:
+            # hide the post done so we won't see it again
+            # we're happy to keep seeing repeats of old posts though
+            post.hide()
             # get id
             paths = url.split('/')
             if len(paths) < 3:
@@ -59,15 +69,22 @@ def main():
                     logging.warn("Could not identify id from url {} - no matching integer segments".format(url))
                 else:
                     try:
-                        print("Creating post with id={}".format(id))
-                        create_reply(post, id)
+                        print("Creating post with tumblr id={}".format(id))
+                        if debug == False:
+                            create_reply(post, id)
+                        else:
+                            print("creating fake response to tumblr {}, reddit {}".format(id, post.url))
                     except TumblrPostNotFoundException as e:
                         logging.warn("Tried looking but could not find post with id {}".format(id))
                     except TumblrNotAQuestionPostException as e:
                         logging.warn("found post with id {} but was not in the form of a question".format(id))
 
-        # hide the post when we're done so we won't see it again
-        post.hide()
 
 if __name__ == "__main__":
+    if len(argv) > 1:
+        if argv[1] == "--debug":
+            print("running in debug mode (no posts made)")
+            main(debug=True)
+            exit(0)
+    print("running for real")
     main()
