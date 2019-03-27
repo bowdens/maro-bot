@@ -3,3 +3,4 @@ praw.ini
 venv/
 __pycache__/
 *.log
+maro-logs

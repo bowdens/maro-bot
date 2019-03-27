@@ -4,7 +4,7 @@ import time, logging
 from tumblr import get_post, TumblrPostNotFoundException, TumblrNotAQuestionPostException
 
 keyword = "markrosewater.tumblr.com"
-subredditToStream = "rzrkyb"
+subredditToStream = "magicTCG"
 
 
 replyText = """**Question** by **[{}]({})**: *{}*
@@ -13,7 +13,7 @@ replyText = """**Question** by **[{}]({})**: *{}*
 
 ---
 
-This comment was made automatically. | [Source](https://www.github.com/bowdens/maro-bot) | Send feedback to /u/rzrkyb"""
+This transcript was made automatically and is not associated with Mark Rosewater. | [Source](https://www.github.com/bowdens/maro-bot) | Send feedback to /u/rzrkyb"""
 
 replyTextAnonymous = """**Question**: *{}*
 
@@ -21,7 +21,7 @@ replyTextAnonymous = """**Question**: *{}*
 
 ---
 
-This comment was made automatically. | [Source](https://www.github.com/bowdens/maro-bot) | Send feedback to /u/rzrkyb"""
+This transcript was made automatically and is not associated with Mark Rosewater. | [Source](https://www.github.com/bowdens/maro-bot) | Send feedback to /u/rzrkyb"""
 
 def create_reply(submission, tumblrPostId):
     res = get_post(tumblrPostId)
@@ -38,7 +38,7 @@ def create_reply(submission, tumblrPostId):
 def main():
     reddit = praw.Reddit("maro-transcriber")
     subreddit = reddit.subreddit(subredditToStream)
-    logging.basicConfig(filename='maro.log', level=logging.INFO)
+    logging.basicConfig(filename='maro-logs/maro.log', level=logging.INFO)
 
 
     for post in subreddit.stream.submissions():
