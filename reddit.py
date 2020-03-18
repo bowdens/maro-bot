@@ -26,7 +26,8 @@ This transcript was made automatically and is not associated with Mark Rosewater
 def create_reply(submission, tumblrPostId):
     res = get_post(tumblrPostId)
     question = res["question"]
-    answer = res["answer"]
+    raw_answer = res["answer"]
+    answer = raw_answer.replace("\n", "  \n")   # replace newlines with two spaces before the newline for reddit markup
     asker = res["asking_name"]
     askerUrl = res["asking_url"]
     url = res["short_url"]
