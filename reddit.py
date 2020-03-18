@@ -1,6 +1,6 @@
 import praw
 import time, logging
-from sys import argv
+from sys import argv, stdout
 from tumblr import get_post, TumblrPostNotFoundException, TumblrNotAQuestionPostException
 
 keyword = "markrosewater.tumblr.com"
@@ -44,7 +44,7 @@ def create_reply(submission, tumblrPostId):
 def main(debug=False):
     reddit = praw.Reddit("maro-transcriber")
     subreddit = reddit.subreddit(subredditToStream)
-    logging.basicConfig(filename='maro-logs/maro.log', level=logging.INFO)
+    logging.basicConfig(stream=stdout, level=logging.INFO)
 
     while True:
         print("beginning to stream /r/{}".format(subreddit.display_name))
