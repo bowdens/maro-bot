@@ -23,7 +23,9 @@ def get_post(post_id):
     short_url = res["short_url"]
     return {
             "question": question,
+            "raw_question": res["question"],
             "answer": answer,
+            "raw_answer": res["answer"],
             "asking_name": asking_name,
             "asking_url": asking_url,
             "short_url": short_url
